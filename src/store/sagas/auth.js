@@ -22,26 +22,20 @@ export function* authUserSaga(action) {
     password: action.password,
     returnSecureToken: true,
   };
-  let url =
-    'https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=AIzaSyBRCW_JKJj5pFiYwJ3xOA-9wf0jmdIMNXk';
+  let url = 'https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=<paste_your_api_key_here>';
 
   if (!action.isSignUp) {
     console.log('is signed up!!!');
-    url =
-      'https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=AIzaSyBRCW_JKJj5pFiYwJ3xOA-9wf0jmdIMNXk';
+    url = 'https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=<paste_your_api-key_here>';
   }
   try {
     const response = yield axios.post(url, authData);
-    const expirationDate = yield new Date(
-      new Date().getTime() + response.data.expiresIn * 1000
-    );
+    const expirationDate = yield new Date(new Date().getTime() + response.data.expiresIn * 1000);
 
     yield localStorage.setItem('token', response.data.idToken);
     yield localStorage.setItem('expirationDate', expirationDate);
     yield localStorage.setItem('userId', response.data.localId);
-    yield put(
-      actions.authSuccess(response.data.idToken, response.data.localId)
-    );
+    yield put(actions.authSuccess(response.data.idToken, response.data.localId));
     yield put(actions.checkAuthTimeout(response.data.expiresIn || 3600));
   } catch (err) {
     put(actions.authFail(err.response.data.error));
@@ -53,17 +47,11 @@ export function* authCheckStateSaga(action) {
   if (!token) {
     return yield put(actions.logout());
   } else {
-    const expirationDate = yield new Date(
-      localStorage.getItem('expirationDate')
-    );
+    const expirationDate = yield new Date(localStorage.getItem('expirationDate'));
     if (expirationDate > new Date()) {
       const userId = yield localStorage.getItem('userId');
       yield put(actions.authSuccess(token, userId));
-      yield put(
-        actions.checkAuthTimeout(
-          (expirationDate.getTime() - new Date().getTime()) / 1000
-        )
-      );
+      yield put(actions.checkAuthTimeout((expirationDate.getTime() - new Date().getTime()) / 1000));
     } else {
       return yield put(actions.logout());
     }
